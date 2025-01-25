@@ -15,8 +15,7 @@ async function fetchProducts() {
                         <p class="card-text">${product.description}</p>
                         <p class="card-text fw-bold">Price: $${product.price}</p>
                         <button class="btn btn-warning me-2" onclick="openEditModal(${product.id}, '${product.name}', '${product.description}', ${product.price}, '${product.image}')">Edit</button>
-
-                        <button class="btn btn-primary" >Buy Now</button>
+                        <button class="btn btn-danger" onclick="openDeleteConfirmationModal(${product.id})">Delete</button>
                     </div>
                 </div>
             </div>
@@ -25,7 +24,6 @@ async function fetchProducts() {
         console.error('Error fetching products:', error);
     }
 }
-
 
 
 async function addProduct() {
@@ -40,13 +38,7 @@ async function addProduct() {
     }
 
     try {
-        await axios.post(API_URL, {
-            name,
-            description,
-            price: parseFloat(price),
-            image: imageURL,
-        });
-
+        await axios.post(API_URL, { name, description, price: parseFloat(price), image: imageURL });
         alert('Product added successfully!');
         fetchProducts();
     } catch (error) {
@@ -75,6 +67,30 @@ function openEditModal(id, name, description, price, image) {
     const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
     editModal.show();
 }
+let productIdToDelete = null; 
+
+function openDeleteConfirmationModal(productId) {
+    productIdToDelete = productId;
+
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+    deleteModal.show();
+}
+
+document.getElementById('confirmDeleteButton').addEventListener('click', async () => {
+    if (!productIdToDelete) return;
+
+    try {
+        await axios.delete(`${API_URL}/${productIdToDelete}`);
+        alert('Product deleted successfully!');
+        fetchProducts();
+
+        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+        deleteModal.hide();
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Error while deleting the product. Check the console for details.');
+    }
+});
 
 async function updateProduct() {
     const id = document.getElementById('editProductId').value;
@@ -89,13 +105,7 @@ async function updateProduct() {
     }
 
     try {
-        await axios.put(`${API_URL}/${id}`, {
-            name,
-            description,
-            price: parseFloat(price),
-            image: imageURL,
-        });
-
+        await axios.put(`${API_URL}/${id}`, { name, description, price: parseFloat(price), image: imageURL });
         alert('Product updated successfully!');
         fetchProducts();
 
